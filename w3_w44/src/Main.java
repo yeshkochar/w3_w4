@@ -1,43 +1,43 @@
 import java.util.*;
 
-class Transaction {
+class Client {
 
-    String id;
-    double fee;
-    String timestamp;
+    String name;
+    int riskScore;
+    double accountBalance;
 
-    public Transaction(String id, double fee, String timestamp) {
-        this.id = id;
-        this.fee = fee;
-        this.timestamp = timestamp;
+    public Client(String name, int riskScore, double balance) {
+        this.name = name;
+        this.riskScore = riskScore;
+        this.accountBalance = balance;
     }
 
-    @Override
     public String toString() {
-        return id + ":" + fee + "@" + timestamp;
+        return name + ":" + riskScore + "($" + accountBalance + ")";
     }
 }
 
 
-class TransactionSorter {
+class ClientSorter {
 
-    // ---------- Bubble Sort ----------
-    public static void bubbleSort(List<Transaction> list) {
+    // -------- Bubble Sort ASC (riskScore) --------
+    public static void bubbleSort(Client[] arr) {
 
-        int n = list.size();
+        int n = arr.length;
         int swaps = 0;
-        int passes = 0;
 
         for (int i = 0; i < n - 1; i++) {
 
             boolean swapped = false;
-            passes++;
 
             for (int j = 0; j < n - i - 1; j++) {
 
-                if (list.get(j).fee > list.get(j + 1).fee) {
+                if (arr[j].riskScore > arr[j + 1].riskScore) {
 
-                    Collections.swap(list, j, j + 1);
+                    Client temp = arr[j];
+                    arr[j] = arr[j + 1];
+                    arr[j + 1] = temp;
+
                     swaps++;
                     swapped = true;
                 }
@@ -46,105 +46,96 @@ class TransactionSorter {
             if (!swapped) break;
         }
 
-        System.out.println("\nBubble Sort Result:");
-        printList(list);
-        System.out.println("Passes = " + passes + ", Swaps = " + swaps);
+        System.out.println("\nBubble Sort (ASC):");
+        print(arr);
+        System.out.println("Swaps = " + swaps);
     }
 
 
-    // ---------- Insertion Sort ----------
-    public static void insertionSort(List<Transaction> list) {
+    // -------- Insertion Sort DESC + balance --------
+    public static void insertionSort(Client[] arr) {
 
-        for (int i = 1; i < list.size(); i++) {
+        for (int i = 1; i < arr.length; i++) {
 
-            Transaction key = list.get(i);
+            Client key = arr[i];
             int j = i - 1;
 
-            while (j >= 0 && compare(list.get(j), key) > 0) {
+            while (j >= 0 &&
+                    compare(arr[j], key) < 0) {
 
-                list.set(j + 1, list.get(j));
+                arr[j + 1] = arr[j];
                 j--;
             }
 
-            list.set(j + 1, key);
+            arr[j + 1] = key;
         }
 
-        System.out.println("\nInsertion Sort Result:");
-        printList(list);
+        System.out.println("\nInsertion Sort (DESC risk + balance):");
+        print(arr);
     }
 
 
-    // Compare fee then timestamp (stable)
-    private static int compare(Transaction a, Transaction b) {
+    // compare for DESC risk, then balance
+    private static int compare(Client a, Client b) {
 
-        if (a.fee != b.fee)
-            return Double.compare(a.fee, b.fee);
+        if (a.riskScore != b.riskScore)
+            return Integer.compare(a.riskScore, b.riskScore);
 
-        return a.timestamp.compareTo(b.timestamp);
+        return Double.compare(a.accountBalance, b.accountBalance);
     }
 
 
-    // ---------- Outlier Detection ----------
-    public static void findOutliers(List<Transaction> list) {
+    // -------- Top 10 risks --------
+    public static void topRisk(Client[] arr, int k) {
 
-        System.out.print("\nHigh-fee outliers (>50): ");
+        System.out.println("\nTop " + k + " highest risk:");
 
-        boolean found = false;
+        for (int i = 0; i < k && i < arr.length; i++) {
 
-        for (Transaction t : list) {
-
-            if (t.fee > 50) {
-                System.out.print(t + " ");
-                found = true;
-            }
+            System.out.println(
+                    arr[i].name +
+                            " (" + arr[i].riskScore + ")"
+            );
         }
-
-        if (!found) System.out.print("none");
-
-        System.out.println();
     }
 
 
-    // ---------- Utility ----------
-    public static void printList(List<Transaction> list) {
+    // -------- Print --------
+    public static void print(Client[] arr) {
 
-        for (Transaction t : list) {
-            System.out.print(t + " ");
+        for (Client c : arr) {
+            System.out.print(c + " ");
         }
         System.out.println();
     }
 }
 
 
-public class TransactionAuditSystem {
+public class ClientRiskRanking {
 
     public static void main(String[] args) {
 
-        ArrayList<Transaction> transactions = new ArrayList<>();
+        Client[] clients = {
 
-        transactions.add(new Transaction("id1", 10.5, "10:00"));
-        transactions.add(new Transaction("id2", 25.0, "09:30"));
-        transactions.add(new Transaction("id3", 5.0, "10:15"));
-        transactions.add(new Transaction("id4", 60.0, "11:00")); // outlier
+                new Client("clientC", 80, 5000),
+                new Client("clientA", 20, 9000),
+                new Client("clientB", 50, 2000),
+                new Client("clientD", 95, 1000),
+                new Client("clientE", 70, 3000)
 
-
-        int size = transactions.size();
-
-
-        // Choose algorithm based on batch size
-        if (size <= 100) {
-
-            TransactionSorter.bubbleSort(
-                    new ArrayList<>(transactions));
-
-        } else if (size <= 1000) {
-
-            TransactionSorter.insertionSort(
-                    new ArrayList<>(transactions));
-
-        }
+        };
 
 
-        TransactionSorter.findOutliers(transactions);
+        // Bubble sort ASC
+        ClientSorter.bubbleSort(clients.clone());
+
+
+        // Insertion sort DESC
+        Client[] copy = clients.clone();
+        ClientSorter.insertionSort(copy);
+
+
+        // Top risks
+        ClientSorter.topRisk(copy, 10);
     }
 }
